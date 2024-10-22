@@ -25,16 +25,20 @@ public class ExampleMod {
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("Hello From {}!", Tags.MOD_NAME);
     }
+
+    
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        BlockHUDHandler blockHUDHandler = new BlockHUDHandler();
+        // Use the builder to configure the BlockHUDHandler
+        new BlockHUDHandlerBuilder()
+                .registerBlocks(Arrays.asList(Blocks.OAK_DOOR, Blocks.DARK_OAK_DOOR, Blocks.ACACIA_DOOR), "Open Door")
+                .registerBlock(Blocks.CHEST, "Open Chest")
+                .registerBlock(Blocks.FURNACE, "Open Furnace")
+                .build(); // Call build() if you want to return the handler (though in this case, we are using the singleton)
 
-        // Register blocks and their custom HUD text
-        blockHUDHandler.registerBlocksHUD(Arrays.asList(Blocks.OAK_DOOR, Blocks.DARK_OAK_DOOR, Blocks.ACACIA_DOOR), "Open Door");
-        blockHUDHandler.registerBlockHUD(Blocks.CHEST, "Open Chest");
-        blockHUDHandler.registerBlockHUD(Blocks.FURNACE, "Open Furnace");
-
-        MinecraftForge.EVENT_BUS.register(blockHUDHandler);
+        // Register the BlockHUDHandler to the MinecraftForge event bus
+        MinecraftForge.EVENT_BUS.register(BlockHUDHandler.getInstance());
     }
+
 
 }

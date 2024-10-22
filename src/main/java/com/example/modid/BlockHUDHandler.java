@@ -16,6 +16,7 @@ import java.util.Map;
 
 public class BlockHUDHandler {
 
+    private static final BlockHUDHandler INSTANCE = new BlockHUDHandler(); // Singleton instance
     private final Map<Block, String> blockDisplayTextMap = new HashMap<>();
     private boolean shouldRenderBlockOverlay = false;
     private Vec3d cachedPlayerPosition;
@@ -27,6 +28,9 @@ public class BlockHUDHandler {
     private final Minecraft MC = Minecraft.getMinecraft();
     private final FontRenderer FONT_RENDERER = MC.fontRenderer;
 
+    public static BlockHUDHandler getInstance() {
+        return INSTANCE;
+    }
     /**
      * Register a block and its associated custom HUD text.
      *
