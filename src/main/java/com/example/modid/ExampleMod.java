@@ -1,6 +1,5 @@
 package com.example.modid;
 
-import com.example.modid.Tags;
 import net.minecraft.init.Blocks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -30,7 +29,7 @@ public class ExampleMod {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         // Use the builder to configure the BlockHUDHandler
-        new BlockHUDHandlerBuilder()
+        new BlockHUDBuilder()
                 .registerBlocks(Arrays.asList(Blocks.OAK_DOOR, Blocks.DARK_OAK_DOOR, Blocks.ACACIA_DOOR), "Open Door")
                 .registerBlock(Blocks.CHEST, "Open Chest")
                 .registerBlock(Blocks.FURNACE, "Open Furnace")

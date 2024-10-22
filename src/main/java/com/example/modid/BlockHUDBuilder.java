@@ -5,23 +5,23 @@ import net.minecraft.block.Block;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockHUDHandlerBuilder {
+public class BlockHUDBuilder {
 
     private final BlockHUDHandler blockHUDHandler = BlockHUDHandler.getInstance();
     private final List<Block> blocksToRegister = new ArrayList<>();
     private String defaultText = "Open Block";
 
-    public BlockHUDHandlerBuilder withDefaultText(String text) {
+    public BlockHUDBuilder withDefaultText(String text) {
         this.defaultText = text;
         return this;
     }
 
-    public BlockHUDHandlerBuilder registerBlock(Block block, String customText) {
+    public BlockHUDBuilder registerBlock(Block block, String customText) {
         blockHUDHandler.registerBlockHUD(block, customText);
         return this;
     }
 
-    public BlockHUDHandlerBuilder registerBlocks(List<Block> blocks, String customText) {
+    public BlockHUDBuilder registerBlocks(List<Block> blocks, String customText) {
         for (Block block : blocks) {
             blockHUDHandler.registerBlockHUD(block, customText);
         }
@@ -32,7 +32,7 @@ public class BlockHUDHandlerBuilder {
         return blockHUDHandler; // Return the configured instance
     }
 
-    public BlockHUDHandlerBuilder addBlock(Block block) {
+    public BlockHUDBuilder addBlock(Block block) {
         blocksToRegister.add(block);
         return this;
     }
