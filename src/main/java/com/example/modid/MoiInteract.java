@@ -1,6 +1,7 @@
 package com.example.modid;
 
 import net.minecraft.init.Blocks;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -21,6 +22,7 @@ public class MoiInteract {
                 .registerBlocks(Arrays.asList(Blocks.OAK_DOOR, Blocks.DARK_OAK_DOOR, Blocks.ACACIA_DOOR), "Open Door")
                 .registerBlock(Blocks.CHEST, "Open Chest")
                 .registerBlock(Blocks.FURNACE, "Open Furnace")
+                .registerBlockImage(Blocks.FARMLAND, new ResourceLocation(Tags.MOD_ID + ":textures/gui/hoe.png"))
                 .build(); // Call build() if you want to return the handler (though in this case, we are using the singleton)
 
         // Register the BlockHUDHandler to the MinecraftForge event bus

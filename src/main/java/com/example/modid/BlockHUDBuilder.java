@@ -1,6 +1,7 @@
 package com.example.modid;
 
 import net.minecraft.block.Block;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,11 @@ public class BlockHUDBuilder {
 
     public BlockHUDBuilder registerBlock(Block block, String customText) {
         blockHUDHandler.registerBlockHUD(block, customText);
+        return this;
+    }
+
+    public BlockHUDBuilder registerBlockImage(Block block, ResourceLocation resourceLocation) {
+        blockHUDHandler.registerBlockImage(block, resourceLocation);
         return this;
     }
 

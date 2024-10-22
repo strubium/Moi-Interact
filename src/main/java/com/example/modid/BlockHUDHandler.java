@@ -25,6 +25,7 @@ public class BlockHUDHandler {
 
     private static final BlockHUDHandler INSTANCE = new BlockHUDHandler(); // Singleton instance
     private final Map<Block, String> blockDisplayTextMap = new HashMap<>();
+    private final Map<Block, ResourceLocation> blockImageMap = new HashMap<>(); // Map for custom images
     private Vec3d cachedPlayerPosition;
     private Vec3d cachedLookVector;
     private float cachedPlayerEyeHeight;
@@ -34,8 +35,8 @@ public class BlockHUDHandler {
     private final Minecraft MC = Minecraft.getMinecraft();
     private final FontRenderer FONT_RENDERER = MC.fontRenderer;
 
-    // Resource location for your image (make sure the path is correct)
-    private final ResourceLocation blockImage = new ResourceLocation(Tags.MOD_ID + ":textures/gui/interact.png");
+    // Default resource location for the image
+    private final ResourceLocation defaultBlockImage = new ResourceLocation(Tags.MOD_ID + ":textures/gui/interact.png");
     private final ResourceLocation crosshairTexture = new ResourceLocation(Tags.MOD_ID + ":textures/gui/crosshair.png");
     private int imageWidth = 16;  // Set to the size of your image
     private int imageHeight = 16; // Set to the size of your image
@@ -48,6 +49,7 @@ public class BlockHUDHandler {
     public static BlockHUDHandler getInstance() {
         return INSTANCE;
     }
+
     /**
      * Register a block and its associated custom HUD text.
      *
@@ -56,6 +58,16 @@ public class BlockHUDHandler {
      */
     public void registerBlockHUD(Block block, String customText) {
         blockDisplayTextMap.put(block, customText);
+    }
+
+    /**
+     * Register a block with a custom image.
+     *
+     * @param block The block to register.
+     * @param customImage The custom image resource location.
+     */
+    public void registerBlockImage(Block block, ResourceLocation customImage) {
+        blockImageMap.put(block, customImage);
     }
 
     /**
@@ -97,7 +109,7 @@ public class BlockHUDHandler {
             drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY + 20, 0xFFFFFF);  // Slightly below the crosshair
 
             // Render the block image at the crosshair
-            drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2)); // Centered on the crosshair
+            drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2), block); // Centered on the crosshair
         }
 
         // Check if the player's position, eye height, and look direction haven't changed
@@ -131,7 +143,6 @@ public class BlockHUDHandler {
 
         GlStateManager.disableBlend();
     }
-
 
 
     /**
@@ -185,9 +196,10 @@ public class BlockHUDHandler {
         fontRenderer.drawString(text, x - (width / 2), y, color);
     }
 
-    private void drawImage(int x, int y) {
+    private void drawImage(int x, int y, Block block) {
         TextureManager textureManager = MC.getTextureManager();
-        textureManager.bindTexture(blockImage);
+        ResourceLocation image = blockImageMap.getOrDefault(block, defaultBlockImage);  // Use custom image if available
+        textureManager.bindTexture(image);
 
         // Enable blending for transparency
         GlStateManager.enableBlend();
