@@ -9,6 +9,8 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Arrays;
+
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION)
 public class ExampleMod {
 
@@ -28,7 +30,7 @@ public class ExampleMod {
         BlockHUDHandler blockHUDHandler = new BlockHUDHandler();
 
         // Register blocks and their custom HUD text
-        blockHUDHandler.registerBlockHUD(Blocks.OAK_DOOR, "Open Door");
+        blockHUDHandler.registerBlocksHUD(Arrays.asList(Blocks.OAK_DOOR, Blocks.DARK_OAK_DOOR, Blocks.ACACIA_DOOR), "Open Door");
         blockHUDHandler.registerBlockHUD(Blocks.CHEST, "Open Chest");
         blockHUDHandler.registerBlockHUD(Blocks.FURNACE, "Open Furnace");
 

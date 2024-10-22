@@ -11,6 +11,7 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BlockHUDHandler {
@@ -21,7 +22,7 @@ public class BlockHUDHandler {
     private Vec3d cachedLookVector;
     private float cachedPlayerEyeHeight;
 
-    private static final double OPENBLOCK_REACH_OVERLAY_DISTANCE = 5.0;  // Max distance for ray tracing
+    private static final double BLOCK_REACH_OVERLAY_DISTANCE = 5.0;  // Max distance for ray tracing
 
     private final Minecraft MC = Minecraft.getMinecraft();
     private final FontRenderer FONT_RENDERER = MC.fontRenderer;
@@ -35,6 +36,19 @@ public class BlockHUDHandler {
     public void registerBlockHUD(Block block, String customText) {
         blockDisplayTextMap.put(block, customText);
     }
+
+    /**
+     * Register a list of blocks and associate the same custom HUD text with each block.
+     *
+     * @param blocks The list of blocks to register.
+     * @param customText The custom text to display for these blocks.
+     */
+    public void registerBlocksHUD(List<Block> blocks, String customText) {
+        for (Block block : blocks) {
+            blockDisplayTextMap.put(block, customText);
+        }
+    }
+
 
     public void handleOpenBlockHUD(RenderGameOverlayEvent.Pre event, double scaledWidth, double scaledHeight) {
         EntityPlayer player = MC.player;
@@ -69,7 +83,7 @@ public class BlockHUDHandler {
 
         // Calculate the player's look direction and reach
         Vec3d originVector = player.getPositionVector().add(0, player.getEyeHeight(), 0);
-        RayTraceResult rtr = player.world.rayTraceBlocks(originVector, originVector.add(player.getLookVec().scale(OPENBLOCK_REACH_OVERLAY_DISTANCE)), false, true, false);
+        RayTraceResult rtr = player.world.rayTraceBlocks(originVector, originVector.add(player.getLookVec().scale(BLOCK_REACH_OVERLAY_DISTANCE)), false, true, false);
 
         if (rtr != null) {
             Block block = player.world.getBlockState(rtr.getBlockPos()).getBlock();
@@ -89,7 +103,7 @@ public class BlockHUDHandler {
      */
     private Block getLookedAtBlock(EntityPlayer player) {
         Vec3d originVector = player.getPositionVector().add(0, player.getEyeHeight(), 0);
-        RayTraceResult rtr = player.world.rayTraceBlocks(originVector, originVector.add(player.getLookVec().scale(OPENBLOCK_REACH_OVERLAY_DISTANCE)), false, true, false);
+        RayTraceResult rtr = player.world.rayTraceBlocks(originVector, originVector.add(player.getLookVec().scale(BLOCK_REACH_OVERLAY_DISTANCE)), false, true, false);
         if (rtr != null) {
             IBlockState state = player.world.getBlockState(rtr.getBlockPos());
             return state.getBlock();
