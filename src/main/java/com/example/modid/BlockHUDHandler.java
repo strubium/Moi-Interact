@@ -98,7 +98,7 @@ public class BlockHUDHandler {
 
         // Inverted fade logic: Fade IN when NOT looking at a block, Fade OUT when looking at a block
         if (block == null) {
-            crosshairAlpha = Math.min(crosshairAlpha + fadeSpeed, 1.0f); // Fade in (not looking at a block)
+            crosshairAlpha = Math.min(crosshairAlpha + fadeSpeed, 0.7f); // Fade in (not looking at a block)
         } else {
             crosshairAlpha = Math.max(crosshairAlpha - fadeOutSpeed, 0.0f); // Fade out (looking at a block)
         }

@@ -44,7 +44,6 @@ public class BlockHUDBuilder {
         return this;
     }
 
-
     public BlockHUDBuilder registerBlocks(List<Block> blocks, String customText) {
         blockHUDHandler.registerBlocksHUD(blocks, customText);
         return this;
