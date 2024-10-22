@@ -41,6 +41,10 @@ public class BlockHUDHandler {
     private int imageHeight = 16; // Set to the size of your image
     private int crosshairSize = 16; // Set to the size of your crosshair image
 
+    private float crosshairAlpha = 0.0f; // Current alpha value for fading
+    private final float fadeSpeed = 0.02f; // Speed of the fade effect
+    private final float fadeOutSpeed = 0.06f; // Speed of the fade effect
+
     public static BlockHUDHandler getInstance() {
         return INSTANCE;
     }
@@ -76,10 +80,16 @@ public class BlockHUDHandler {
         int overlayX = (int) (scaledWidth / 2);
         int overlayY = (int) (scaledHeight / 2);  // Centered on crosshair
 
+        // Inverted fade logic: Fade IN when NOT looking at a block, Fade OUT when looking at a block
         if (block == null) {
-            // Render the custom crosshair if the player is NOT looking at a block
-            drawCrosshair(overlayX, overlayY, 0.7f,0.7f);
+            crosshairAlpha = Math.min(crosshairAlpha + fadeSpeed, 1.0f); // Fade in (not looking at a block)
         } else {
+            crosshairAlpha = Math.max(crosshairAlpha - fadeOutSpeed, 0.0f); // Fade out (looking at a block)
+        }
+
+        // Render the crosshair with the current alpha
+        drawCrosshair(overlayX, overlayY, 0.7f, crosshairAlpha);
+        if (block != null) {
             // If the block is registered, render the overlay text and image
             String customText = blockDisplayTextMap.getOrDefault(block, " ");
 
@@ -195,10 +205,11 @@ public class BlockHUDHandler {
         BufferBuilder buffer = tessellator.getBuffer();
 
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(x, y + height, 0).tex((float)u / width, (float)(v + height) / height).endVertex();
         buffer.pos(x + width, y + height, 0).tex((float)(u + width) / width, (float)(v + height) / height).endVertex();
-        buffer.pos(x + width, y, 0).tex((float)(u + width) / width, (float)v / height).endVertex();
-        buffer.pos(x, y, 0).tex((float)u / width, (float)v / height).endVertex();
+        buffer.pos(x, y + height, 0).tex((float) u / width, (float) (v + height) / height).endVertex();
+        buffer.pos(x + width, y + height, 0).tex((float) (u + width) / width, (float) (v + height) / height).endVertex();
+        buffer.pos(x + width, y, 0).tex((float) (u + width) / width, (float) v / height).endVertex();
+        buffer.pos(x, y, 0).tex((float) u / width, (float) v / height).endVertex();
         tessellator.draw();
     }
 }
