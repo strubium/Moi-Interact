@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -26,6 +27,7 @@ public class BlockHUDHandler {
     private static final BlockHUDHandler INSTANCE = new BlockHUDHandler(); // Singleton instance
     private final Map<Block, String> blockDisplayTextMap = new HashMap<>();
     private final Map<Block, ResourceLocation> blockImageMap = new HashMap<>(); // Map for custom images
+    private final Map<Block, ItemStack> blockImageItemMap = new HashMap<>(); // Map for block images tied to specific items
     private Vec3d cachedPlayerPosition;
     private Vec3d cachedLookVector;
     private float cachedPlayerEyeHeight;
@@ -61,12 +63,14 @@ public class BlockHUDHandler {
     }
 
     /**
-     * Register a block with a custom image.
+     * Register a block with a custom image and associated item to show the image when held.
      *
      * @param block The block to register.
      * @param customImage The custom image resource location.
+     * @param itemStack The item the player must hold to display the image.
      */
-    public void registerBlockImage(Block block, ResourceLocation customImage) {
+    public void registerBlockImageItem(Block block, ResourceLocation customImage, ItemStack itemStack) {
+        blockImageItemMap.put(block, itemStack);
         blockImageMap.put(block, customImage);
     }
 
@@ -108,8 +112,8 @@ public class BlockHUDHandler {
             // Render the custom overlay text centered at the crosshair
             drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY + 20, 0xFFFFFF);  // Slightly below the crosshair
 
-            // Render the block image at the crosshair
-            drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2), block); // Centered on the crosshair
+            // Render the block image only if the player is holding the correct item
+            drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2), block, player); // Centered on the crosshair
         }
 
         // Check if the player's position, eye height, and look direction haven't changed
@@ -143,7 +147,6 @@ public class BlockHUDHandler {
 
         GlStateManager.disableBlend();
     }
-
 
     /**
      * Gets the block the player is currently looking at, if within range.
@@ -196,9 +199,18 @@ public class BlockHUDHandler {
         fontRenderer.drawString(text, x - (width / 2), y, color);
     }
 
-    private void drawImage(int x, int y, Block block) {
+    private void drawImage(int x, int y, Block block, EntityPlayer player) {
+        // Check if the block has an associated item and if the player is holding it
+        if (blockImageItemMap.containsKey(block)) {
+            ItemStack requiredItem = blockImageItemMap.get(block);
+            if (player.getHeldItemMainhand().getItem() != requiredItem.getItem()) {
+                return;  // Do not render the image if the player isn't holding the required item
+            }
+        }
+
+        // Bind the texture and render it
         TextureManager textureManager = MC.getTextureManager();
-        ResourceLocation image = blockImageMap.getOrDefault(block, defaultBlockImage);  // Use custom image if available
+        ResourceLocation image = blockImageMap.getOrDefault(block, defaultBlockImage);
         textureManager.bindTexture(image);
 
         // Enable blending for transparency

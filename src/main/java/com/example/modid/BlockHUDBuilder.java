@@ -1,6 +1,7 @@
 package com.example.modid;
 
 import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.ArrayList;
@@ -27,9 +28,22 @@ public class BlockHUDBuilder {
     }
 
     public BlockHUDBuilder registerBlockImage(Block block, ResourceLocation resourceLocation) {
-        blockHUDHandler.registerBlockImage(block, resourceLocation);
+        blockHUDHandler.registerBlockImageItem(block, resourceLocation, ItemStack.EMPTY);
         return this;
     }
+
+    public BlockHUDBuilder registerBlockImageItem(Block block, ResourceLocation resourceLocation, ItemStack itemStack) {
+        blockHUDHandler.registerBlockImageItem(block, resourceLocation, itemStack);
+        return this;
+    }
+
+    public BlockHUDBuilder registerBlockImageItem(List<Block> blocks, ResourceLocation resourceLocation, ItemStack itemStack) {
+        for (Block block : blocks) {
+            blockHUDHandler.registerBlockImageItem(block, resourceLocation, itemStack);
+        }
+        return this;
+    }
+
 
     public BlockHUDBuilder registerBlocks(List<Block> blocks, String customText) {
         blockHUDHandler.registerBlocksHUD(blocks, customText);
