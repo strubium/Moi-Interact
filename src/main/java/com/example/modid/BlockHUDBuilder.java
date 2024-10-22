@@ -16,6 +16,11 @@ public class BlockHUDBuilder {
         return this;
     }
 
+    public BlockHUDBuilder registerBlock(Block block) {
+        blockHUDHandler.registerBlockHUD(block, defaultText);
+        return this;
+    }
+
     public BlockHUDBuilder registerBlock(Block block, String customText) {
         blockHUDHandler.registerBlockHUD(block, customText);
         return this;
