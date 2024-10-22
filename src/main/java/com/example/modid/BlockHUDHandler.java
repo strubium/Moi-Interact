@@ -205,7 +205,6 @@ public class BlockHUDHandler {
         BufferBuilder buffer = tessellator.getBuffer();
 
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(x + width, y + height, 0).tex((float)(u + width) / width, (float)(v + height) / height).endVertex();
         buffer.pos(x, y + height, 0).tex((float) u / width, (float) (v + height) / height).endVertex();
         buffer.pos(x + width, y + height, 0).tex((float) (u + width) / width, (float) (v + height) / height).endVertex();
         buffer.pos(x + width, y, 0).tex((float) (u + width) / width, (float) v / height).endVertex();
