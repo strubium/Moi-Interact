@@ -4,11 +4,18 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.opengl.GL11;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +34,11 @@ public class BlockHUDHandler {
 
     private final Minecraft MC = Minecraft.getMinecraft();
     private final FontRenderer FONT_RENDERER = MC.fontRenderer;
+
+    // Resource location for your image (make sure the path is correct)
+    private final ResourceLocation blockImage = new ResourceLocation(Tags.MOD_ID + ":textures/gui/interact.png");
+    private int imageWidth = 16;  // Set to the size of your image
+    private int imageHeight = 16; // Set to the size of your image
 
     public static BlockHUDHandler getInstance() {
         return INSTANCE;
@@ -53,7 +65,6 @@ public class BlockHUDHandler {
         }
     }
 
-
     public void handleOpenBlockHUD(RenderGameOverlayEvent.Pre event, double scaledWidth, double scaledHeight) {
         EntityPlayer player = MC.player;
 
@@ -61,14 +72,17 @@ public class BlockHUDHandler {
         if (shouldRenderBlockOverlay) {
             // Crosshair is at the center of the screen
             int overlayX = (int) (scaledWidth / 2);
-            int overlayY = (int) (scaledHeight / 2) + 10;  // Slight offset from crosshair
+            int overlayY = (int) (scaledHeight / 2);  // Centered on crosshair
 
             Block block = getLookedAtBlock(player);
             if (block != null) {
                 String customText = blockDisplayTextMap.getOrDefault(block, "Open Block");
 
                 // Render the custom overlay text centered at the crosshair
-                drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY, 0xFFFFFF);  // White color
+                drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY + 20, 0xFFFFFF);  // Slightly below the crosshair
+
+                // Render the block image at the crosshair
+                drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2)); // Centered on the crosshair
             }
         }
 
@@ -117,6 +131,11 @@ public class BlockHUDHandler {
 
     @SubscribeEvent
     public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
+        // Ensure we are in the correct phase
+        if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) {
+            return; // Only render for the ALL type
+        }
+
         // Get the screen dimensions
         double scaledWidth = event.getResolution().getScaledWidth_double();
         double scaledHeight = event.getResolution().getScaledHeight_double();
@@ -137,5 +156,32 @@ public class BlockHUDHandler {
     private void drawCenteredString(FontRenderer fontRenderer, String text, int x, int y, int color) {
         int width = fontRenderer.getStringWidth(text);
         fontRenderer.drawString(text, x - (width / 2), y, color);
+    }
+
+    private void drawImage(int x, int y) {
+        TextureManager textureManager = MC.getTextureManager();
+        textureManager.bindTexture(blockImage);
+
+        // Enable blending for transparency
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        // Draw the image at the specified size
+        drawTexturedModalRect(x, y, 0, 0, imageWidth, imageHeight);
+
+        // Disable blending after rendering
+        GlStateManager.disableBlend();
+    }
+
+    private void drawTexturedModalRect(int x, int y, int u, int v, int width, int height) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        buffer.pos(x, y + height, 0).tex((float)u / width, (float)(v + height) / height).endVertex();
+        buffer.pos(x + width, y + height, 0).tex((float)(u + width) / width, (float)(v + height) / height).endVertex();
+        buffer.pos(x + width, y, 0).tex((float)(u + width) / width, (float)v / height).endVertex();
+        buffer.pos(x, y, 0).tex((float)u / width, (float)v / height).endVertex();
+        tessellator.draw();
     }
 }
