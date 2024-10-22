@@ -25,7 +25,6 @@ public class BlockHUDHandler {
 
     private static final BlockHUDHandler INSTANCE = new BlockHUDHandler(); // Singleton instance
     private final Map<Block, String> blockDisplayTextMap = new HashMap<>();
-    private boolean shouldRenderBlockOverlay = false;
     private Vec3d cachedPlayerPosition;
     private Vec3d cachedLookVector;
     private float cachedPlayerEyeHeight;
@@ -37,8 +36,10 @@ public class BlockHUDHandler {
 
     // Resource location for your image (make sure the path is correct)
     private final ResourceLocation blockImage = new ResourceLocation(Tags.MOD_ID + ":textures/gui/interact.png");
+    private final ResourceLocation crosshairTexture = new ResourceLocation(Tags.MOD_ID + ":textures/gui/crosshair.png");
     private int imageWidth = 16;  // Set to the size of your image
     private int imageHeight = 16; // Set to the size of your image
+    private int crosshairSize = 16; // Set to the size of your crosshair image
 
     public static BlockHUDHandler getInstance() {
         return INSTANCE;
@@ -65,25 +66,28 @@ public class BlockHUDHandler {
         }
     }
 
-    public void handleOpenBlockHUD(RenderGameOverlayEvent.Pre event, double scaledWidth, double scaledHeight) {
+    public void handleOpenBlockHUD(double scaledWidth, double scaledHeight) {
         EntityPlayer player = MC.player;
 
-        // Render the overlay if required
-        if (shouldRenderBlockOverlay) {
-            // Crosshair is at the center of the screen
-            int overlayX = (int) (scaledWidth / 2);
-            int overlayY = (int) (scaledHeight / 2);  // Centered on crosshair
+        // Get the block the player is currently looking at
+        Block block = getLookedAtBlock(player);
 
-            Block block = getLookedAtBlock(player);
-            if (block != null) {
-                String customText = blockDisplayTextMap.getOrDefault(block, "Open Block");
+        // Crosshair is at the center of the screen
+        int overlayX = (int) (scaledWidth / 2);
+        int overlayY = (int) (scaledHeight / 2);  // Centered on crosshair
 
-                // Render the custom overlay text centered at the crosshair
-                drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY + 20, 0xFFFFFF);  // Slightly below the crosshair
+        if (block == null) {
+            // Render the custom crosshair if the player is NOT looking at a block
+            drawCrosshair(overlayX, overlayY, 0.7f,0.7f);
+        } else {
+            // If the block is registered, render the overlay text and image
+            String customText = blockDisplayTextMap.getOrDefault(block, " ");
 
-                // Render the block image at the crosshair
-                drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2)); // Centered on the crosshair
-            }
+            // Render the custom overlay text centered at the crosshair
+            drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY + 20, 0xFFFFFF);  // Slightly below the crosshair
+
+            // Render the block image at the crosshair
+            drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2)); // Centered on the crosshair
         }
 
         // Check if the player's position, eye height, and look direction haven't changed
@@ -97,21 +101,28 @@ public class BlockHUDHandler {
         cachedPlayerPosition = player.getPositionVector();
         cachedLookVector = player.getLookVec();
         cachedPlayerEyeHeight = player.getEyeHeight();
-        shouldRenderBlockOverlay = false;
-
-        // Calculate the player's look direction and reach
-        Vec3d originVector = player.getPositionVector().add(0, player.getEyeHeight(), 0);
-        RayTraceResult rtr = player.world.rayTraceBlocks(originVector, originVector.add(player.getLookVec().scale(BLOCK_REACH_OVERLAY_DISTANCE)), false, true, false);
-
-        if (rtr != null) {
-            Block block = player.world.getBlockState(rtr.getBlockPos()).getBlock();
-
-            // If the block is registered, trigger the overlay
-            if (blockDisplayTextMap.containsKey(block)) {
-                shouldRenderBlockOverlay = true;
-            }
-        }
     }
+
+    private void drawCrosshair(int x, int y, float scale, float alpha) {
+        // Bind the crosshair texture
+        TextureManager textureManager = MC.getTextureManager();
+        textureManager.bindTexture(crosshairTexture);
+
+        // Calculate the scaled size
+        int scaledSize = (int) (crosshairSize * scale);
+
+        // Set up blending for transparency
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        // Draw the texture centered on the screen with transparency
+        GlStateManager.color(1.0f, 1.0f, 1.0f, alpha); // Set the color and alpha (transparency)
+        drawTexturedModalRect(x - (scaledSize / 2), y - (scaledSize / 2), 0, 0, scaledSize, scaledSize);
+
+        GlStateManager.disableBlend();
+    }
+
+
 
     /**
      * Gets the block the player is currently looking at, if within range.
@@ -131,7 +142,13 @@ public class BlockHUDHandler {
 
     @SubscribeEvent
     public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
-        // Ensure we are in the correct phase
+        // Ensure we are in the correct phase and only for the CROSSHAIR type
+        if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
+            // Cancel the default crosshair rendering
+            event.setCanceled(true);
+        }
+
+        // Ensure we are in the correct phase and only for the ALL type
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) {
             return; // Only render for the ALL type
         }
@@ -141,7 +158,7 @@ public class BlockHUDHandler {
         double scaledHeight = event.getResolution().getScaledHeight_double();
 
         // Call the block HUD handler to display relevant info
-        handleOpenBlockHUD(event, scaledWidth, scaledHeight);
+        handleOpenBlockHUD(scaledWidth, scaledHeight);
     }
 
     /**

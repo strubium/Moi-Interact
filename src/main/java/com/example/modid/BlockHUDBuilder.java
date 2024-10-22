@@ -8,7 +8,6 @@ import java.util.List;
 public class BlockHUDBuilder {
 
     private final BlockHUDHandler blockHUDHandler = BlockHUDHandler.getInstance();
-    private final List<Block> blocksToRegister = new ArrayList<>();
     private String defaultText = "Open Block";
 
     public BlockHUDBuilder withDefaultText(String text) {
@@ -27,18 +26,11 @@ public class BlockHUDBuilder {
     }
 
     public BlockHUDBuilder registerBlocks(List<Block> blocks, String customText) {
-        for (Block block : blocks) {
-            blockHUDHandler.registerBlockHUD(block, customText);
-        }
+        blockHUDHandler.registerBlocksHUD(blocks, customText);
         return this;
     }
 
     public BlockHUDHandler build() {
         return blockHUDHandler; // Return the configured instance
-    }
-
-    public BlockHUDBuilder addBlock(Block block) {
-        blocksToRegister.add(block);
-        return this;
     }
 }
