@@ -197,13 +197,13 @@ public class BlockHUDHandler {
         // Check if the block has an associated item and if the player is holding it
         ItemStack requiredItem = blockImageItemMap.get(block);
 
-        // Check if the required item is valid
+        // Ensure that we only render if the player is holding the correct item
         if (requiredItem != null && !requiredItem.isEmpty()) {
             ItemStack heldItem = player.getHeldItemMainhand();
 
-            // Ensure that the held item is also valid
-            if (!heldItem.isEmpty() && heldItem.getItem() != requiredItem.getItem()) {
-                return;  // Do not render the image if the player isn't holding the required item
+            // Ensure that the held item is valid and matches the required item
+            if (heldItem.isEmpty() || !heldItem.isItemEqual(requiredItem)) {
+                return; // Exit without rendering the image if the player isn't holding the required item
             }
         }
 
