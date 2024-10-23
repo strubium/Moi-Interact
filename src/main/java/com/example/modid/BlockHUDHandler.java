@@ -26,27 +26,27 @@ public class BlockHUDHandler {
 
     private static final BlockHUDHandler INSTANCE = new BlockHUDHandler(); // Singleton instance
     private final Map<Block, String> blockDisplayTextMap = new HashMap<>();
-    private final Map<Block, ResourceLocation> blockImageMap = new HashMap<>(); // Map for custom images
-    private final Map<Block, ItemStack> blockImageItemMap = new HashMap<>(); // Map for block images tied to specific items
+    private final Map<Block, ResourceLocation> blockImageMap = new HashMap<>();
+    private final Map<Block, ItemStack> blockImageItemMap = new HashMap<>();
     private Vec3d cachedPlayerPosition;
     private Vec3d cachedLookVector;
     private float cachedPlayerEyeHeight;
 
     private static final double BLOCK_REACH_OVERLAY_DISTANCE = 5.0;  // Max distance for ray tracing
+    private static final float MAX_CROSSHAIR_ALPHA = 0.7f; // Max alpha for crosshair
+    private static final float FADE_IN_SPEED = 0.02f; // Speed of fade in
+    private static final float FADE_OUT_SPEED = 0.06f; // Speed of fade out
+    private static final ResourceLocation DEFAULT_BLOCK_IMAGE = new ResourceLocation(Tags.MOD_ID + ":textures/gui/interact.png");
+    private static final ResourceLocation CROSSHAIR_TEXTURE = new ResourceLocation(Tags.MOD_ID + ":textures/gui/crosshair.png");
 
     private final Minecraft MC = Minecraft.getMinecraft();
     private final FontRenderer FONT_RENDERER = MC.fontRenderer;
 
     // Default resource location for the image
-    private final ResourceLocation defaultBlockImage = new ResourceLocation(Tags.MOD_ID + ":textures/gui/interact.png");
-    private final ResourceLocation crosshairTexture = new ResourceLocation(Tags.MOD_ID + ":textures/gui/crosshair.png");
-    private int imageWidth = 16;  // Set to the size of your image
+    private int imageWidth = 16; // Set to the size of your image
     private int imageHeight = 16; // Set to the size of your image
     private int crosshairSize = 16; // Set to the size of your crosshair image
-
     private float crosshairAlpha = 0.0f; // Current alpha value for fading
-    private final float fadeSpeed = 0.02f; // Speed of the fade effect
-    private final float fadeOutSpeed = 0.06f; // Speed of the fade effect
 
     public static BlockHUDHandler getInstance() {
         return INSTANCE;
@@ -88,63 +88,52 @@ public class BlockHUDHandler {
 
     public void handleOpenBlockHUD(double scaledWidth, double scaledHeight) {
         EntityPlayer player = MC.player;
-
-        // Get the block the player is currently looking at
         Block block = getLookedAtBlock(player);
 
         // Crosshair is at the center of the screen
         int overlayX = (int) (scaledWidth / 2);
-        int overlayY = (int) (scaledHeight / 2);  // Centered on crosshair
+        int overlayY = (int) (scaledHeight / 2); // Centered on crosshair
 
         // Inverted fade logic: Fade IN when NOT looking at a block, Fade OUT when looking at a block
-        if (block == null) {
-            crosshairAlpha = Math.min(crosshairAlpha + fadeSpeed, 0.7f); // Fade in (not looking at a block)
-        } else {
-            crosshairAlpha = Math.max(crosshairAlpha - fadeOutSpeed, 0.0f); // Fade out (looking at a block)
-        }
+        crosshairAlpha = (block == null) ?
+                Math.min(crosshairAlpha + FADE_IN_SPEED, MAX_CROSSHAIR_ALPHA) :
+                Math.max(crosshairAlpha - FADE_OUT_SPEED, 0.0f);
 
         // Render the crosshair with the current alpha
         drawCrosshair(overlayX, overlayY, 0.7f, crosshairAlpha);
+
         if (block != null) {
             // If the block is registered, render the overlay text and image
             String customText = blockDisplayTextMap.getOrDefault(block, " ");
-
             // Render the custom overlay text centered at the crosshair
-            drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY + 20, 0xFFFFFF);  // Slightly below the crosshair
-
             // Render the block image only if the player is holding the correct item
-            drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2), block, player); // Centered on the crosshair
+            drawCenteredString(FONT_RENDERER, customText, overlayX, overlayY + 20, 0xFFFFFF);
+            drawImage(overlayX - (imageWidth / 2), overlayY - (imageHeight / 2), block, player);
         }
 
         // Check if the player's position, eye height, and look direction haven't changed
         if (cachedPlayerPosition != null && cachedPlayerPosition.equals(player.getPositionVector())
                 && cachedPlayerEyeHeight == player.getEyeHeight()
                 && cachedLookVector != null && cachedLookVector.equals(player.getLookVec())) {
-            return;
+            return; // No updates needed
         }
 
-        // Update cached position, look vector, and eye height
+        // Update cached values
         cachedPlayerPosition = player.getPositionVector();
         cachedLookVector = player.getLookVec();
         cachedPlayerEyeHeight = player.getEyeHeight();
     }
 
     private void drawCrosshair(int x, int y, float scale, float alpha) {
-        // Bind the crosshair texture
         TextureManager textureManager = MC.getTextureManager();
-        textureManager.bindTexture(crosshairTexture);
+        textureManager.bindTexture(CROSSHAIR_TEXTURE);
 
-        // Calculate the scaled size
         int scaledSize = (int) (crosshairSize * scale);
-
-        // Set up blending for transparency
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.color(1.0f, 1.0f, 1.0f, alpha);
 
-        // Draw the texture centered on the screen with transparency
-        GlStateManager.color(1.0f, 1.0f, 1.0f, alpha); // Set the color and alpha (transparency)
         drawTexturedModalRect(x - (scaledSize / 2), y - (scaledSize / 2), 0, 0, scaledSize, scaledSize);
-
         GlStateManager.disableBlend();
     }
 
@@ -166,10 +155,8 @@ public class BlockHUDHandler {
 
     @SubscribeEvent
     public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
-        // Ensure we are in the correct phase and only for the CROSSHAIR type
         if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
-            // Cancel the default crosshair rendering
-            event.setCanceled(true);
+            event.setCanceled(true); // Cancel default crosshair rendering
         }
 
         // Ensure we are in the correct phase and only for the ALL type
@@ -201,25 +188,21 @@ public class BlockHUDHandler {
 
     private void drawImage(int x, int y, Block block, EntityPlayer player) {
         // Check if the block has an associated item and if the player is holding it
-        if (blockImageItemMap.containsKey(block)) {
-            ItemStack requiredItem = blockImageItemMap.get(block);
-            if (player.getHeldItemMainhand().getItem() != requiredItem.getItem()) {
-                return;  // Do not render the image if the player isn't holding the required item
-            }
+        ItemStack requiredItem = blockImageItemMap.get(block);
+        if (requiredItem != null && player.getHeldItemMainhand().getItem() != requiredItem.getItem()) {
+            return;  // Do not render the image if the player isn't holding the required item
         }
 
         // Bind the texture and render it
         TextureManager textureManager = MC.getTextureManager();
-        ResourceLocation image = blockImageMap.getOrDefault(block, defaultBlockImage);
+        ResourceLocation image = blockImageMap.getOrDefault(block, DEFAULT_BLOCK_IMAGE);
         textureManager.bindTexture(image);
 
         // Enable blending for transparency
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-
         // Draw the image at the specified size
         drawTexturedModalRect(x, y, 0, 0, imageWidth, imageHeight);
-
         // Disable blending after rendering
         GlStateManager.disableBlend();
     }
