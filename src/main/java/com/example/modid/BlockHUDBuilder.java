@@ -32,6 +32,11 @@ public class BlockHUDBuilder {
         return this;
     }
 
+    public BlockHUDBuilder registerImageOreDict(String oreKey, ResourceLocation resourceLocation) {
+        blockHUDHandler.registerBlockOreDictImage(oreKey, resourceLocation);
+        return this;
+    }
+
     public BlockHUDBuilder registerBlockImageItem(Block block, ResourceLocation resourceLocation, ItemStack itemStack) {
         blockHUDHandler.registerBlockImageItem(block, resourceLocation, itemStack);
         return this;

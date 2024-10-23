@@ -24,6 +24,7 @@ public class MoiInteract {
                 .registerBlocks(Arrays.asList(Blocks.OAK_DOOR, Blocks.DARK_OAK_DOOR, Blocks.ACACIA_DOOR), "Open Door")
                 .registerBlock(Blocks.CHEST, "Open Chest")
                 .registerBlock(Blocks.FURNACE, "Open Furnace")
+                .registerImageOreDict("stone", new ResourceLocation(Tags.MOD_ID + ":textures/gui/axe.png"))
                 .registerBlockImageItem(Arrays.asList(Blocks.LOG, Blocks.LOG2), new ResourceLocation(Tags.MOD_ID + ":textures/gui/axe.png"),Items.DIAMOND_AXE.getDefaultInstance())
                 .registerBlockImageItem(Arrays.asList(Blocks.GRASS, Blocks.DIRT), new ResourceLocation(Tags.MOD_ID + ":textures/gui/hoe.png"), Items.DIAMOND_HOE.getDefaultInstance())
                 .build(); // Call build() if you want to return the handler (though in this case, we are using the singleton)

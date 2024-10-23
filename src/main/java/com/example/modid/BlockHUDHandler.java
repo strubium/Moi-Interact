@@ -16,6 +16,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.oredict.OreDictionary;
 import org.lwjgl.opengl.GL11;
 
 import java.util.HashMap;
@@ -27,6 +28,8 @@ public class BlockHUDHandler {
     private static final BlockHUDHandler INSTANCE = new BlockHUDHandler(); // Singleton instance
     private final Map<Block, String> blockDisplayTextMap = new HashMap<>();
     private final Map<Block, ResourceLocation> blockImageMap = new HashMap<>();
+    private final Map<String, ResourceLocation> oreDictImageMap = new HashMap<>();
+
     private final Map<Block, ItemStack> blockImageItemMap = new HashMap<>();
     private Vec3d cachedPlayerPosition;
     private Vec3d cachedLookVector;
@@ -60,6 +63,10 @@ public class BlockHUDHandler {
      */
     public void registerBlockHUD(Block block, String customText) {
         blockDisplayTextMap.put(block, customText);
+    }
+
+    public void registerBlockOreDictImage(String oreDictKey, ResourceLocation image) {
+        oreDictImageMap.put(oreDictKey, image);
     }
 
     /**
@@ -189,22 +196,89 @@ public class BlockHUDHandler {
     private void drawImage(int x, int y, Block block, EntityPlayer player) {
         // Check if the block has an associated item and if the player is holding it
         ItemStack requiredItem = blockImageItemMap.get(block);
-        if (requiredItem != null && player.getHeldItemMainhand().getItem() != requiredItem.getItem()) {
-            return;  // Do not render the image if the player isn't holding the required item
+
+        // Check if the required item is valid
+        if (requiredItem != null && !requiredItem.isEmpty()) {
+            ItemStack heldItem = player.getHeldItemMainhand();
+
+            // Ensure that the held item is also valid
+            if (!heldItem.isEmpty() && heldItem.getItem() != requiredItem.getItem()) {
+                return;  // Do not render the image if the player isn't holding the required item
+            }
         }
+
+
+        // Check for ore dictionary key matches and get the image
+        String oreDictKey = getOreDictKeyForBlock(block);  // Helper method to find the oreDict key
+        ResourceLocation oreDictImage = (oreDictKey != null) ? oreDictImageMap.get(oreDictKey) : null;
+
+        // Use oreDictImage if available, otherwise fall back to block-specific image or default image
+        ResourceLocation image = oreDictImage != null
+                ? oreDictImage
+                : blockImageMap.getOrDefault(block, DEFAULT_BLOCK_IMAGE);
 
         // Bind the texture and render it
         TextureManager textureManager = MC.getTextureManager();
-        ResourceLocation image = blockImageMap.getOrDefault(block, DEFAULT_BLOCK_IMAGE);
         textureManager.bindTexture(image);
 
         // Enable blending for transparency
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
         // Draw the image at the specified size
         drawTexturedModalRect(x, y, 0, 0, imageWidth, imageHeight);
+
         // Disable blending after rendering
         GlStateManager.disableBlend();
+    }
+
+
+    private final Map<Block, String> oreDictKeyCache = new HashMap<>();
+
+    private String getOreDictKeyForBlock(Block block) {
+        // Check the cache first to avoid redundant calculations
+        if (oreDictKeyCache.containsKey(block)) {
+            return oreDictKeyCache.get(block);  // Return cached result
+        }
+
+        // Iterate through oreDictImageMap and check if the block matches any oreDict keys
+        for (Map.Entry<String, ResourceLocation> entry : oreDictImageMap.entrySet()) {
+            String oreDictKey = entry.getKey();
+            if (isBlockInOreDict(block, oreDictKey)) {
+                // Cache the result before returning
+                oreDictKeyCache.put(block, oreDictKey);
+                return oreDictKey;  // Return the first matching oreDict key
+            }
+        }
+
+        // Cache the null result as well for blocks that don't match any keys
+        oreDictKeyCache.put(block, null);
+        return null;  // No matching oreDict key found
+    }
+
+    private boolean isBlockInOreDict(Block block, String oreDictKey) {
+        // Use OreDictionary to check if the block matches the oreDictKey
+        int oreId = OreDictionary.getOreID(oreDictKey);
+
+        // Create an ItemStack from the block
+        ItemStack blockItemStack = new ItemStack(block);
+
+        // Check if the ItemStack is empty or invalid before proceeding
+        if (blockItemStack.isEmpty()) {
+            return false;  // Block does not have a valid ItemStack, so it's not in the ore dictionary
+        }
+
+        // Get the ore dictionary IDs for the block's ItemStack
+        int[] blockOreIDs = OreDictionary.getOreIDs(blockItemStack);
+
+        // Check if any of the block's OreDictionary IDs match the oreDictKey ID
+        for (int id : blockOreIDs) {
+            if (id == oreId) {
+                return true;  // Block matches the oreDict key
+            }
+        }
+
+        return false;  // No match found
     }
 
     private void drawTexturedModalRect(int x, int y, int u, int v, int width, int height) {
