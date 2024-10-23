@@ -1,4 +1,4 @@
-package com.example.modid;
+package com.strubium.moiinteract;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;

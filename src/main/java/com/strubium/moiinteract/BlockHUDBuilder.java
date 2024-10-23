@@ -1,10 +1,9 @@
-package com.example.modid;
+package com.strubium.moiinteract;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BlockHUDBuilder {
